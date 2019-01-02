@@ -22,10 +22,9 @@ class ChatScreen extends StatefulWidget {
 
 }
 
-class ChatScreenState extends State<ChatScreen> {
+class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   @override
-
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(title: new Text("Friendlychat")),
@@ -48,6 +47,13 @@ class ChatScreenState extends State<ChatScreen> {
         ],                                                          //new
       ),                                                            //new
     );
+  }
+
+  @override
+  void dispose() {                                                   //new
+    for (ChatMessage message in _messages)                           //new
+      message.animationController.dispose();                         //new
+    super.dispose();                                                 //new
   }
 
   final List<ChatMessage> _messages = <ChatMessage>[];             // new
@@ -82,47 +88,57 @@ class ChatScreenState extends State<ChatScreen> {
 
   void _handleSubmitted(String text) {
     _textController.clear();
-    ChatMessage message = new ChatMessage(                         //new
-      text: text,                                                  //new
-    );                                                             //new
+    ChatMessage message = new ChatMessage(
+      text: text,
+      animationController: new AnimationController(                  //new
+        duration: new Duration(milliseconds: 700),                   //new
+        vsync: this,                                                 //new
+      ),                                                             //new
+    );                                                            //new
     setState(() {                                                  //new
       _messages.insert(0, message);                                //new
-    });                                                            //new
+    });
+    message.animationController.forward();                           //new//new
   }
 
 
 }
 
 class ChatMessage extends StatelessWidget {
-
-  ChatMessage({this.text});
+  ChatMessage({this.text, this.animationController});
   final String text;
+  final AnimationController animationController;
   @override
   Widget build(BuildContext context) {
-    return new Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0),
-      child: new Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          new Container(
-            margin: const EdgeInsets.only(right: 16.0),
-            child: new CircleAvatar(child: new Text(_name[0])),
-          ),
-          new Column(
+    return new SizeTransition(                                    //new
+        sizeFactor: new CurvedAnimation(                              //new
+            parent: animationController, curve: Curves.easeOut),      //new
+        axisAlignment: 0.0,                                           //new
+        child: new Container(                                    //modified
+          margin: const EdgeInsets.symmetric(vertical: 10.0),
+          child: new Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              new Text(_name, style: Theme.of(context).textTheme.subhead),
               new Container(
-                margin: const EdgeInsets.only(top: 5.0),
-                child: new Text(text),
+                margin: const EdgeInsets.only(right: 16.0),
+                child: new CircleAvatar(child: new Text(_name[0])),
+              ),
+              new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  new Text(_name, style: Theme.of(context).textTheme.subhead),
+                  new Container(
+                    margin: const EdgeInsets.only(top: 5.0),
+                    child: new Text(text),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        )                                                           //new
     );
   }
-
 }
+
 
 const String _name = "Harry";
